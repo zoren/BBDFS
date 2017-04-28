@@ -48,6 +48,8 @@
     <Content Include="any\netstandard1.6\FSharp.Core.sigdata">
       <Paket>True</Paket>
     </Content>
+    <Compile Include="Lang.fs" />
+    <Compile Include="Builder.fs" />
     <Compile Include="BDDFS.fs" />
     <None Include="App.config" />
   </ItemGroup>
