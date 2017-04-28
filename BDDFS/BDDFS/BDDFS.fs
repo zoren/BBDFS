@@ -55,16 +55,14 @@ let eval env =
             else e l
     e
 
-let test =
-    Node(1, One 2, Zero 2)
-
 type Builder(n: int) =
     let T = new System.Collections.Generic.List<_>([|(n + 1, None, None); (n + 1, None, None)|])
     let H = new System.Collections.Generic.Dictionary<_, _>()
     
     member this.addT(i, l, h) =
+        let u = T.Count
         T.Add((i, Some l, Some h))
-        T.Count
+        u
 
     member this.insert(i, l, h, u) =
         H.Add((i, l, h), u)
@@ -91,8 +89,36 @@ type Builder(n: int) =
                 this.MK(i, v0, v1)
         build'(t, 1)
 
+    member this.GetExport u =
+        printfn "%A" u
+        printfn "%A" T
+        let rec exp i =
+            if i < 0
+            then failwith "i lt 0"
+            if i >= T.Count
+            then failwithf "%i >= %i" i T.Count
+            
+            let v, l, h  = T.[i]
+            match i with
+            | 0 -> Zero v
+            | 1 -> One v
+            | _ -> Node(v, exp <| Option.get l, exp <| Option.get h)
+        exp u
+
+let v i = VarDeref i
+let andE t1 t2 = Bin(t1, And, t2)
+let orE t1 t2 = Bin(t1, Or, t2)
+let impE t1 t2 = Bin(t1, Imp, t2)
+let biimpE t1 t2 = Bin(t1, BiImp, t2)
+
 [<EntryPoint>]
 let main argv =
-    let env = Map.ofList [1, true]
-    printfn "%A" <| eval (fun v -> Map.find v env) test
+    let v1, v2, v3 = v 1, v 2, v 3
+    let t = orE (biimpE v1 v2) v3
+    let b = Builder(3)
+    let bddTopIndex = b.Build t
+    let bdd = b.GetExport bddTopIndex
+    let env = Map.ofList [1, true; 2, false; 3, true]
+    printfn "%A" <| eval (fun v -> Map.find v env) bdd
+    printfn "%A" <| evalExp (fun v -> Map.find v env) t
     0 // return an integer exit code
