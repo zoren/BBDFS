@@ -50,6 +50,7 @@
     </Content>
     <Compile Include="Lang.fs" />
     <Compile Include="Builder.fs" />
+    <Compile Include="NDDBuilder.fs" />
     <Compile Include="BDDFS.fs" />
     <None Include="App.config" />
   </ItemGroup>
