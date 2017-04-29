@@ -18,13 +18,34 @@ let eval env =
             else e l
     e
 
+type TEntry =
+    abstract member v: int
+    abstract member l: int
+    abstract member h: int
+
+let DummyEntry(v) =
+    {
+        new TEntry with
+        member __.v = v
+        member __.l = failwith "not meant to be accessed"
+        member __.h = failwith "not meant to be accessed"
+    }
+
+let Entry(v, l, h) =
+    {
+        new TEntry with
+        member __.v = v
+        member __.l = l
+        member __.h = h
+    }
+
 type Builder(n: int) =
-    let T = new System.Collections.Generic.List<_>([|(n + 1, None, None); (n + 1, None, None)|])
+    let T = new System.Collections.Generic.List<_>([|DummyEntry(n + 1); DummyEntry(n + 1)|])
     let H = new System.Collections.Generic.Dictionary<_, _>()
     
     member this.addT(i, l, h) =
         let u = T.Count
-        T.Add((i, Some l, Some h))
+        T.Add(Entry(i, l, h))
         u
 
     member this.insert(i, l, h, u) =
@@ -61,9 +82,9 @@ type Builder(n: int) =
             if i >= T.Count
             then failwithf "%i >= %i" i T.Count
             
-            let v, l, h  = T.[i]
+            let entry = T.[i]
             match i with
-            | 0 -> Zero v
-            | 1 -> One v
-            | _ -> Node(v, exp <| Option.get l, exp <| Option.get h)
+            | 0 -> Zero entry.v
+            | 1 -> One entry.v
+            | _ -> Node(entry.v, exp entry.l, exp entry.h)
         exp u
