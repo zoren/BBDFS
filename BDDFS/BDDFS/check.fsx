@@ -8,7 +8,7 @@ open BDD
 
 let prependAll e ll = List.map (fun l -> e::l) ll
 
-let prod (xs: 'a list) (yss: 'a list list) = xs |> List.map (fun x -> prependAll x yss) |> List.concat
+let prod (xs: 'a list) (yss: 'a list list) = xs |> List.collect (fun x -> prependAll x yss)
 
 let (.=.) left right = left = right |@ sprintf "%A = %A" left right
 
