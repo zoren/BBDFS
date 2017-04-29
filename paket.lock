@@ -1,6 +1,8 @@
 NUGET
   remote: https://www.nuget.org/api/v2
     FAKE (4.60)
+    FsCheck (2.8)
+      FSharp.Core (>= 3.1.2.5)
     FSharp.Core (4.1.12)
       System.Collections (>= 4.0.11) - framework: >= netstandard16
       System.Console (>= 4.0) - framework: >= netstandard16

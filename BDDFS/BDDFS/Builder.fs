@@ -48,7 +48,7 @@ type Builder(n: int) =
         let rec build' (env, i) =
             if i > n
             then
-                if pred (fun v -> Map.find v env) then 1 else 0
+                if pred env then 1 else 0
             else
                 let v0 = build'(Map.add i 0 env, i + 1)
                 let v1 = build'(Map.add i 1 env, i + 1)
@@ -130,7 +130,7 @@ type Builder(n: int) =
             | 1 -> true
             | _ ->
                 let n = nodes.[t]
-                let vl = env(n.Var)
+                let vl = Map.find n.Var env
                 let c = if vl = 1 then n.High else n.Low
                 eval c
         eval t
