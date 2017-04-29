@@ -157,3 +157,9 @@ type Builder(n: int) =
     member this.Compose (u1, x, u2) =
         let ite [|x; y0; y1|] = if x = 1 then y0 else y1
         this.ApplyN(ite, [|u1; x; u2|])
+
+    member this.Exists(x, t) =
+        let t0 = this.Restrict(t, 0, x)
+        let t1 = this.Restrict(t, 1, x)
+        let orF = fun(b1, b2) -> if b1 = 1 || b2 = 1 then 1 else 0
+        this.Apply(orF, t0, t1)
