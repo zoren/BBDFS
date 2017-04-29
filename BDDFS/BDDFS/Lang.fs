@@ -1,12 +1,13 @@
 module Lang
 
 type Variable = int
+type Value = int
 
 type BinOp =
     And | Or | Imp | BiImp
 
 type Exp =
-    | VarDeref of Variable
+    | VarEq of Variable * Value
     | ZeroExp
     | OneExp
     | Not of Exp
@@ -15,7 +16,7 @@ type Exp =
 let evalExp env =
     let rec ev =
         function
-        | VarDeref v -> env v
+        | VarEq(v, vl) -> env v = vl
         | ZeroExp -> false
         | OneExp -> true
         | Not e -> not <| ev e
@@ -28,13 +29,3 @@ let evalExp env =
                 | BiImp -> (=)
             op (ev e1) (ev e2)
     ev
-
-let substExp env =
-    let rec s =
-        function
-        | VarDeref v -> env v
-        | ZeroExp -> ZeroExp
-        | OneExp -> OneExp
-        | Not e -> Not <| s e
-        | Bin(e1, binOp, e2) -> Bin(s e1, binOp, s e2)
-    s

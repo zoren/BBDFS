@@ -3,7 +3,7 @@ open BDD
 
 module BDDFS =
 
-    let v i = VarDeref i
+    let v i = VarEq(i, 1)
     let andE t1 t2 = Bin(t1, And, t2)
     let orE t1 t2 = Bin(t1, Or, t2)
     let impE t1 t2 = Bin(t1, Imp, t2)
@@ -16,7 +16,7 @@ module BDDFS =
         let b = Builder(3)
         let bddTopIndex = b.BuildEnv t
         let bdd = b.GetExport bddTopIndex
-        let env = Map.ofList [1, true; 2, false; 3, true]
+        let env = Map.ofList [1, 1; 2, 0; 3, 1]
         printfn "%A" <| eval (fun v -> Map.find v env) bdd
         printfn "%A" <| evalExp (fun v -> Map.find v env) t
         let t = b.Apply((fun(b1, b2) -> if b1 = 1 || b2 = 1 then 1 else 0), bddTopIndex, 1)

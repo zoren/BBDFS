@@ -13,7 +13,7 @@ let eval env =
         | Zero _ -> false
         | One _ -> true
         | Node(v, l, h) ->
-            if env v
+            if env v = 1
             then e h
             else e l
     e
@@ -62,25 +62,14 @@ type Builder(n: int) =
                 this.insert(i, l, h, u)
                 u
 
-    member this.Build t =
-        let rec build' (t, i) =
-            if i > n
-            then
-                if not <| evalExp (fun _ -> failwith "no free var expected") t then 0 else 1
-            else
-                let v0 = build'(substExp (fun v -> if v = i then ZeroExp else VarDeref v) t, i + 1)
-                let v1 = build'(substExp (fun v -> if v = i then OneExp else VarDeref v) t, i + 1)
-                this.MK(i, v0, v1)
-        build'(t, 1)
-
     member this.BuildEnv t =
         let rec build' (env, i) =
             if i > n
             then
                 if not <| evalExp (fun v -> Map.find v env) t then 0 else 1
             else
-                let v0 = build'(Map.add i false env, i + 1)
-                let v1 = build'(Map.add i true env, i + 1)
+                let v0 = build'(Map.add i 0 env, i + 1)
+                let v1 = build'(Map.add i 1 env, i + 1)
                 this.MK(i, v0, v1)
         build'(Map.empty, 1)
 
