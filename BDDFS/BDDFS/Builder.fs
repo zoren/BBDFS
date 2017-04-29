@@ -88,3 +88,26 @@ type Builder(n: int) =
             | 1 -> One entry.v
             | _ -> Node(entry.v, exp entry.l, exp entry.h)
         exp u
+
+    member this.Apply(op, u1, u2) =
+        let G: int option [,] = Array2D.create u1 u2 None
+        let rec app(u1, u2) =
+            match G.[u1, u2] with
+            | Some u -> u
+            | None ->
+                let u =
+                    if (u1 = 0 || u1 = 1) && (u2 = 0 || u2 = 1)
+                    then op(u1, u2)
+                    else
+                        let e1, e2 = T.[u1], T.[u2]
+                        let v1, l1, h1 = e1.v, e1.l, e1.h
+                        let v2, l2, h2 = e2.v, e2.l, e2.h
+                        if v1 = v2
+                        then this.MK(v1, app(l1, l2), app(h1, h2))
+                        else
+                            if v1 < v2
+                            then this.MK(v1, app(l1, u2), app(h1, u2))
+                            else this.MK(v2, app(u1, l2), app(u1, h2))
+                G.[u1, u2] <- Some u
+                u
+        app(u1, u2)
