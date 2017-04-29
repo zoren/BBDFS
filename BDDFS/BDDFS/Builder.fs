@@ -73,6 +73,17 @@ type Builder(n: int) =
                 this.MK(i, v0, v1)
         build'(t, 1)
 
+    member this.BuildEnv t =
+        let rec build' (env, i) =
+            if i > n
+            then
+                if not <| evalExp (fun v -> Map.find v env) t then 0 else 1
+            else
+                let v0 = build'(Map.add i false env, i + 1)
+                let v1 = build'(Map.add i true env, i + 1)
+                this.MK(i, v0, v1)
+        build'(Map.empty, 1)
+
     member this.GetExport u =
         printfn "%A" u
         printfn "%A" T

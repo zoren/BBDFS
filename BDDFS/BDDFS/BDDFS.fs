@@ -14,7 +14,7 @@ module BDDFS =
         let v1, v2, v3 = v 1, v 2, v 3
         let t = orE (biimpE v1 v2) v3
         let b = Builder(3)
-        let bddTopIndex = b.Build t
+        let bddTopIndex = b.BuildEnv t
         let bdd = b.GetExport bddTopIndex
         let env = Map.ofList [1, true; 2, false; 3, true]
         printfn "%A" <| eval (fun v -> Map.find v env) bdd
