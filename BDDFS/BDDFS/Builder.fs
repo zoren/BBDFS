@@ -1,47 +1,47 @@
 module BDD
 
-type TEntry =
-    abstract member v: int
-    abstract member l: int
-    abstract member h: int
+type IEntry =
+    abstract member Var: int
+    abstract member Low: int
+    abstract member High: int
 
 let DummyEntry(v) =
     {
-        new TEntry with
-        member __.v = v
-        member __.l = failwith "not meant to be accessed"
-        member __.h = failwith "not meant to be accessed"
+        new IEntry with
+        member __.Var = v
+        member __.Low = failwith "not meant to be accessed"
+        member __.High = failwith "not meant to be accessed"
     }
 
 let Entry(v, l, h) =
     {
-        new TEntry with
-        member __.v = v
-        member __.l = l
-        member __.h = h
+        new IEntry with
+        member __.Var = v
+        member __.Low = l
+        member __.High = h
     }
 
 type Builder(n: int) =
-    let T = new System.Collections.Generic.List<_>([|DummyEntry(n + 1); DummyEntry(n + 1)|])
-    let H = new System.Collections.Generic.Dictionary<_, _>()
+    let nodes = new System.Collections.Generic.List<_>([|DummyEntry(n + 1); DummyEntry(n + 1)|])
+    let hashTable = new System.Collections.Generic.Dictionary<_, _>()
     
-    member this.addT(i, l, h) =
-        let u = T.Count
-        T.Add(Entry(i, l, h))
+    member this.AddT(i, l, h) =
+        let u = nodes.Count
+        nodes.Add(Entry(i, l, h))
         u
 
-    member this.insert(i, l, h, u) =
-        H.Add((i, l, h), u)
+    member this.Insert(i, l, h, u) =
+        hashTable.Add((i, l, h), u)
 
     member this.MK(i, l, h) =
         if l = h
         then l
         else
-            match H.TryGetValue((i, l, h)) with
+            match hashTable.TryGetValue((i, l, h)) with
             | true, v -> v
             | _ ->
-                let u = this.addT((i, l, h))
-                this.insert(i, l, h, u)
+                let u = this.AddT((i, l, h))
+                this.Insert(i, l, h, u)
                 u
 
     member this.BuildEnv pred =
@@ -57,60 +57,64 @@ type Builder(n: int) =
 
     member this.Restrict(u, j, b) =
         let rec res u =
-            let n = T.[u]
-            match compare n.v j with
+            let n = nodes.[u]
+            match compare n.Var j with
             | 1 -> u
-            | -1 -> this.MK(n.v, res(n.l), res(n.h))
+            | -1 -> this.MK(n.Var, res(n.Low), res(n.High))
             | 0 ->
                 if b = 0
-                then res(n.l)
-                else res(n.h)
+                then res(n.Low)
+                else res(n.High)
+            | _ -> failwith "not expected"
         res u
 
     member this.Apply(op, u1, u2) =
-        let G: int option [,] = Array2D.create T.Count T.Count None
+        let memTable: int option [,] = Array2D.create nodes.Count nodes.Count None
         let rec app(u1, u2) =
-            match G.[u1, u2] with
+            match memTable.[u1, u2] with
             | Some u -> u
             | None ->
                 let u =
                     if (u1 = 0 || u1 = 1) && (u2 = 0 || u2 = 1)
                     then op(u1, u2)
                     else
-                        let e1, e2 = T.[u1], T.[u2]
-                        if e1.v = e2.v
-                        then this.MK(e1.v, app(e1.l, e2.l), app(e1.h, e2.h))
+                        let e1, e2 = nodes.[u1], nodes.[u2]
+                        if e1.Var = e2.Var
+                        then this.MK(e1.Var, app(e1.Low, e2.Low), app(e1.High, e2.High))
                         else
-                            if e1.v < e2.v
-                            then this.MK(e1.v, app(e1.l, u2), app(e1.h, u2))
-                            else this.MK(e2.v, app(u1, e2.l), app(u1, e2.h))
-                G.[u1, u2] <- Some u
+                            if e1.Var < e2.Var
+                            then this.MK(e1.Var, app(e1.Low, u2), app(e1.High, u2))
+                            else this.MK(e2.Var, app(u1, e2.Low), app(u1, e2.High))
+                memTable.[u1, u2] <- Some u
                 u
         app(u1, u2)
 
     member this.ApplyN(op, us) =
-        let G = new System.Collections.Generic.Dictionary<_, _>()
+        let memTable = new System.Collections.Generic.Dictionary<_, _>()
         let rec app (us: int[]) =
-            match G.TryGetValue(us) with
+            match memTable.TryGetValue(us) with
             | true, u -> u
             | _ ->
                 let u =
                     if Array.forall (fun u -> u = 0 || u = 1) us
                     then op us
                     else
-                        let min = Seq.minBy (fun u -> T.[u].v) us
-                        let minVar = T.[min].v
-                        let l = Array.map (fun u -> let n = T.[u]
-                                                    if n.v = minVar then n.l else u) us
-                        let h = Array.map (fun u -> let n = T.[u]
-                                                    if n.v = minVar then n.h else u) us
+                        let min = Seq.minBy (fun u -> nodes.[u].Var) us
+                        let minVar = nodes.[min].Var
+                        let l = Array.map (fun u -> let n = nodes.[u]
+                                                    if n.Var = minVar then n.Low else u) us
+                        let h = Array.map (fun u -> let n = nodes.[u]
+                                                    if n.Var = minVar then n.High else u) us
                         this.MK(minVar, app l, app h)
-                G.[us] <- u
+                memTable.[us] <- u
                 u
         app us
 
     member this.Compose (u1, x, u2) =
-        let ite [|x; y0; y1|] = if x = 1 then y0 else y1
+        let ite =
+            function
+            | [|x; y0; y1|] -> if x = 1 then y0 else y1
+            | _ -> failwith "expected 3 args"
         this.ApplyN(ite, [|u1; x; u2|])
 
     member this.Exists(x, t) =
@@ -125,8 +129,8 @@ type Builder(n: int) =
             | 0 -> false
             | 1 -> true
             | _ ->
-                let n = T.[t]
-                let vl = env(n.v)
-                let c = if vl = 1 then n.h else n.l
+                let n = nodes.[t]
+                let vl = env(n.Var)
+                let c = if vl = 1 then n.High else n.Low
                 eval c
         eval t
