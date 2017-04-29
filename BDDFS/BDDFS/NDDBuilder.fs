@@ -50,7 +50,7 @@ type NDDBuilder(domainSizes: int array) =
         let rec build' (env, i) =
             if i > n
             then
-                if pred (fun v -> Map.find v env) then 1 else 0
+                if pred env then 1 else 0
             else
                 let values =
                     Array.map (fun value -> build'(Map.add i value env, i + 1)) <| getDomainValues i
@@ -139,7 +139,7 @@ type NDDBuilder(domainSizes: int array) =
             | 1 -> true
             | _ ->
                 let n = nodes.[t]
-                let vl = env(n.Var)
+                let vl = Map.find n.Var env
                 eval n.Children.[vl]
         eval t
 
