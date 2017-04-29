@@ -101,7 +101,7 @@ type Builder(n: int) =
         exp u
 
     member this.Apply(op, u1, u2) =
-        let G: int option [,] = Array2D.create u1 u2 None
+        let G: int option [,] = Array2D.create T.Count T.Count None
         let rec app(u1, u2) =
             match G.[u1, u2] with
             | Some u -> u
@@ -111,14 +111,12 @@ type Builder(n: int) =
                     then op(u1, u2)
                     else
                         let e1, e2 = T.[u1], T.[u2]
-                        let v1, l1, h1 = e1.v, e1.l, e1.h
-                        let v2, l2, h2 = e2.v, e2.l, e2.h
-                        if v1 = v2
-                        then this.MK(v1, app(l1, l2), app(h1, h2))
+                        if e1.v = e2.v
+                        then this.MK(e1.v, app(e1.l, e2.l), app(e1.h, e2.h))
                         else
-                            if v1 < v2
-                            then this.MK(v1, app(l1, u2), app(h1, u2))
-                            else this.MK(v2, app(u1, l2), app(u1, h2))
+                            if e1.v < e2.v
+                            then this.MK(e1.v, app(e1.l, u2), app(e1.h, u2))
+                            else this.MK(e2.v, app(u1, e2.l), app(u1, e2.h))
                 G.[u1, u2] <- Some u
                 u
         app(u1, u2)
@@ -143,4 +141,3 @@ type Builder(n: int) =
                 G.[us] <- u
                 u
         app us
-        
