@@ -48,11 +48,11 @@ type NDDBuilder(domainSizes: int array) =
                 this.insert(i, children, u)
                 u
 
-    member this.BuildEnv t =
+    member this.BuildEnv pred =
         let rec build' (env, i) =
             if i > n
             then
-                if not <| evalExp (fun v -> Map.find v env) t then 0 else 1
+                if pred (fun v -> Map.find v env) then 1 else 0
             else
                 let values =
                     Array.map (fun value -> build'(Map.add i value env, i + 1)) <| getDomainValues i

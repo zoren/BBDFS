@@ -46,11 +46,11 @@ type Builder(n: int) =
                 this.insert(i, l, h, u)
                 u
 
-    member this.BuildEnv t =
+    member this.BuildEnv pred =
         let rec build' (env, i) =
             if i > n
             then
-                if not <| evalExp (fun v -> Map.find v env) t then 0 else 1
+                if pred (fun v -> Map.find v env) then 1 else 0
             else
                 let v0 = build'(Map.add i 0 env, i + 1)
                 let v1 = build'(Map.add i 1 env, i + 1)
