@@ -100,6 +100,18 @@ type Builder(n: int) =
             | _ -> Node(entry.v, exp entry.l, exp entry.h)
         exp u
 
+    member this.Restrict(u, j, b) =
+        let rec res u =
+            let n = T.[u]
+            match compare n.v j with
+            | 1 -> u
+            | -1 -> this.MK(n.v, res(n.l), res(n.h))
+            | 0 ->
+                if b = 0
+                then res(n.l)
+                else res(n.h)
+        res u
+
     member this.Apply(op, u1, u2) =
         let G: int option [,] = Array2D.create T.Count T.Count None
         let rec app(u1, u2) =
@@ -141,3 +153,7 @@ type Builder(n: int) =
                 G.[us] <- u
                 u
         app us
+
+    member this.Compose (u1, x, u2) =
+        let ite [|x; y0; y1|] = if x = 1 then y0 else y1
+        this.ApplyN(ite, [|u1; x; u2|])
