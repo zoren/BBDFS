@@ -122,3 +122,25 @@ type Builder(n: int) =
                 G.[u1, u2] <- Some u
                 u
         app(u1, u2)
+
+    member this.ApplyN(op, us) =
+        let G = new System.Collections.Generic.Dictionary<_, _>()
+        let rec app (us: int[]) =
+            match G.TryGetValue(us) with
+            | true, u -> u
+            | _ ->
+                let u =
+                    if Array.forall (fun u -> u = 0 || u = 1) us
+                    then op us
+                    else
+                        let min = Seq.minBy (fun u -> T.[u].v) us
+                        let minVar = T.[min].v
+                        let l = Array.map (fun u -> let n = T.[u]
+                                                    if n.v = minVar then n.l else u) us
+                        let h = Array.map (fun u -> let n = T.[u]
+                                                    if n.v = minVar then n.h else u) us
+                        this.MK(minVar, app l, app h)
+                G.[us] <- u
+                u
+        app us
+        
