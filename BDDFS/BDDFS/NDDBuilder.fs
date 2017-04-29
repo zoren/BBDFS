@@ -111,7 +111,9 @@ type NDDBuilder(domainSizes: int array) =
                                         (fun value ->
                                             app(
                                                 us |> Array.map (fun u -> let n = T.[u]
-                                                                          if n.v = minVar then n.Children.[value] else u))))
+                                                                          if n.v = minVar
+                                                                          then n.Children.[value]
+                                                                          else u))))
                 G.[us] <- u
                 u
         app us
