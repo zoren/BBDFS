@@ -2,22 +2,6 @@ module BDD
 
 open Lang
 
-type BDD =
-    | Zero of Variable
-    | One of Variable
-    | Node of Variable * BDD * BDD
-
-let eval env =
-    let rec e =
-        function
-        | Zero _ -> false
-        | One _ -> true
-        | Node(v, l, h) ->
-            if env v = 1
-            then e h
-            else e l
-    e
-
 type TEntry =
     abstract member v: int
     abstract member l: int
@@ -72,22 +56,6 @@ type Builder(n: int) =
                 let v1 = build'(Map.add i 1 env, i + 1)
                 this.MK(i, v0, v1)
         build'(Map.empty, 1)
-
-    member this.GetExport u =
-        printfn "%A" u
-        printfn "%A" T
-        let rec exp i =
-            if i < 0
-            then failwith "i lt 0"
-            if i >= T.Count
-            then failwithf "%i >= %i" i T.Count
-            
-            let entry = T.[i]
-            match i with
-            | 0 -> Zero entry.v
-            | 1 -> One entry.v
-            | _ -> Node(entry.v, exp entry.l, exp entry.h)
-        exp u
 
     member this.Restrict(u, j, b) =
         let rec res u =
@@ -152,3 +120,15 @@ type Builder(n: int) =
         let t1 = this.Restrict(t, 1, x)
         let orF = fun(b1, b2) -> if b1 = 1 || b2 = 1 then 1 else 0
         this.Apply(orF, t0, t1)
+
+    member this.Eval(env, t) =
+        let rec eval t =
+            match t with
+            | 0 -> false
+            | 1 -> true
+            | _ ->
+                let n = T.[t]
+                let vl = env(n.v)
+                let c = if vl = 1 then n.h else n.l
+                eval c
+        eval t
