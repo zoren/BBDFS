@@ -1,7 +1,5 @@
 module NDD
 
-open Lang
-
 type TEntry =
     abstract member v: int
     abstract Children : int[] with get

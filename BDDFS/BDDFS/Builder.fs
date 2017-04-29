@@ -1,7 +1,5 @@
 module BDD
 
-open Lang
-
 type TEntry =
     abstract member v: int
     abstract member l: int
