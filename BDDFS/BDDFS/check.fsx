@@ -149,10 +149,12 @@ let getSingleton =
     | _ -> failwith "expected one element"
 
 // build ndd using apply
-let buildNDD (b: NDDBuilder) =
+let buildNDD (b: NDDBuilder) (domSizes: int[]) =
     let rec mk e =
         match e with
-        | VarEq(v, value) -> b.BuildEnv (fun env -> Map.find v env = value)
+        | VarEq(v, value) ->
+            let c = [|0 .. domSizes.[v] - 1|] |> Array.map (fun v -> if v = value then 1 else 0)
+            b.MK(v, c)
         | Call(f, args) ->
             let eargs = Array.map mk args
             let func =
@@ -175,7 +177,7 @@ let testBuildUsingApply (inpExp: InpExp<int, int>) =
     let vars = [|0 .. maxVar|]
     let domSizes = Array.map (fun v -> defaultArg (Option.map seq <| tryGetOpt dom v) (seq [1]) |> Seq.max |> (+)1 |> max 2)  vars
     let b = NDDBuilder(domSizes)
-    let bddTopIndex = buildNDD b exp
+    let bddTopIndex = buildNDD b domSizes exp
     let pred = fun env -> evalExp env exp
     let p = fun e -> b.Eval(e, bddTopIndex) = pred e 
     let e = buildDoms domSizes
