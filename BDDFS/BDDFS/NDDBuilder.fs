@@ -27,6 +27,8 @@ type NDDBuilder(domainSizes: int array) =
     let getDomainValues i = [|0 .. domainSizes.[i] - 1|]
 
     member this.MK(i, children: int[]) =
+        if (getDomainValues i).Length <> children.Length
+        then failwithf "arity mismatch, var has %i values, got %i children" (getDomainValues i).Length children.Length
         let firstChild = children.[0]
         if Array.forall((=)firstChild) children
         then firstChild
