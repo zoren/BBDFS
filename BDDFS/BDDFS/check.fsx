@@ -51,33 +51,50 @@ let tryGetOpt (dic:System.Collections.Generic.Dictionary<_, _>) k =
     | true, s -> Some s
     | _ -> None
     
-type BinOp = And | Or
+type BinOp =
+    And | Or
+
+type InpExp<'Variable, 'Value> =
+    | VarEq of 'Variable * 'Value
+    | Not of InpExp<'Variable, 'Value>
+    | BinOp of InpExp<'Variable, 'Value> * BinOp * InpExp<'Variable, 'Value>
+
+type Op = And | Or | Not
 
 type Exp<'Variable, 'Value> =
     | VarEq of 'Variable * 'Value
-    | Not of Exp<'Variable, 'Value>
-    | BinOp of Exp<'Variable, 'Value> * BinOp * Exp<'Variable, 'Value>
+    | Call of Op * Exp<'Variable, 'Value>[]
+
+let rec convert =
+    function
+    | InpExp.VarEq(v, vl) -> VarEq(v, vl)
+    | InpExp.Not e -> Call(Not, [|convert e|])
+    | InpExp.BinOp(e1, op, e2) ->
+        let f =
+            match op with
+            | BinOp.And -> Op.And
+            | BinOp.Or -> Op.Or
+        Call(f, [|convert e1; convert e2|])
+
+let evalFunc op vs =
+    match op, vs with
+    | And, [|b1; b2|] -> b1 && b2
+    | Or, [|b1; b2|] -> b1 || b2
+    | Not, [|b|] -> not b
+    | _ -> failwithf "arity error"
 
 let evalExp env =
     let rec ev =
         function
         | VarEq (var, value) -> Map.find var env = value
-        | Not e -> not <| ev e
-        | BinOp(e1, op, e2) ->
-            let v1, v2 = ev e1, ev e2
-            let f =
-                match op with
-                | And -> (&&)
-                | Or -> (||)
-            f v1 v2
+        | Call(op, es) -> evalFunc op <| Array.map ev es
     ev
 
 let mapExp f =
     let rec ev =
         function
         | VarEq (var, value) -> VarEq <| f (var, value)
-        | Not e -> Not <| ev e
-        | BinOp(e1, op, e2) -> BinOp(ev e1, op, ev e2)
+        | Call(op, es) -> Call(op, Array.map ev es)
     ev
 
 open System.Collections.Generic
@@ -94,20 +111,18 @@ let getDomain exp =
                     let s = HashSet<_>()
                     dic.Add(var, s)
                     s
-            ignore <| s.Add value        
-        | Not e -> loop e
-        | BinOp(e1, op, e2) ->
-            loop e1
-            loop e2
+            ignore <| s.Add value
+        | Call(_, es) -> Array.iter loop es
     loop exp
     dic
 
-let testT (inpExp: Exp<int, int>) =
-    let strDom = getDomain inpExp
+let testT (inpExp: InpExp<int, int>) =
+    let e = convert inpExp
+    let strDom = getDomain e
     let getVarIndex v = strDom.Keys |> Seq.findIndex((=)v)
     let getValueIndex v value = strDom.[v] |> Seq.findIndex((=)value)
     let exp =
-        mapExp (fun (v, value) -> getVarIndex v, getValueIndex v value) inpExp
+        mapExp (fun (v, value) -> getVarIndex v, getValueIndex v value) e
     let dom = getDomain exp
     let maxVar = dom.Keys |> Seq.max
     let vars = [|0 .. maxVar|]
