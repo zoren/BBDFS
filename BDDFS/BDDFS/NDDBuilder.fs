@@ -19,7 +19,7 @@ let Entry(v, children: int[]) =
     }
 
 type NDDBuilder(domainSizes: int array) =
-    do Array.iter(fun d -> if d < 2 then failwith "domain size") domainSizes
+    do Array.iter(fun d -> if d < 2 then failwithf "domain size: %i" d) domainSizes
     let n = domainSizes.Length
     let nodes = new System.Collections.Generic.List<_>([|DummyEntry(n); DummyEntry(n)|])
     let hash = new System.Collections.Generic.Dictionary<_, _>()
