@@ -41,7 +41,7 @@ let testNDD3 (Fun pred) =
     let p = fun e -> b.Eval(e, bddTopIndex) = pred e 
     let e = buildDoms domSizes
     e |> List.forall (fun vals ->
-                        let env = Map.ofSeq << Seq.map(fun(i, x) -> (i + 1, x)) <| Seq.indexed vals
+                        let env = Map.ofSeq <| Seq.indexed vals
                         p env)
 
 Check.Quick testNDD3

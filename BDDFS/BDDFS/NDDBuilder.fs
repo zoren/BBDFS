@@ -21,10 +21,10 @@ let Entry(v, children: int[]) =
 type NDDBuilder(domainSizes: int array) =
     do Array.iter(fun d -> if d < 2 then failwith "domain size") domainSizes
     let n = domainSizes.Length
-    let nodes = new System.Collections.Generic.List<_>([|DummyEntry(n + 1); DummyEntry(n + 1)|])
+    let nodes = new System.Collections.Generic.List<_>([|DummyEntry(n); DummyEntry(n)|])
     let hash = new System.Collections.Generic.Dictionary<_, _>()
     
-    let getDomainValues i = [|0 .. domainSizes.[i - 1] - 1|]
+    let getDomainValues i = [|0 .. domainSizes.[i] - 1|]
 
     member this.AddT(i, children) =
         let u = nodes.Count
@@ -48,14 +48,14 @@ type NDDBuilder(domainSizes: int array) =
 
     member this.BuildEnv pred =
         let rec build' (env, i) =
-            if i > n
+            if i >= n
             then
                 if pred env then 1 else 0
             else
                 let values =
                     Array.map (fun value -> build'(Map.add i value env, i + 1)) <| getDomainValues i
                 this.MK(i, values)
-        build'(Map.empty, 1)
+        build'(Map.empty, 0)
 
     member this.Restrict(u, j, b) =
         let rec res u =
