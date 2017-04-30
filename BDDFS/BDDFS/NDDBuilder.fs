@@ -26,14 +26,6 @@ type NDDBuilder(domainSizes: int array) =
     
     let getDomainValues i = [|0 .. domainSizes.[i] - 1|]
 
-    member this.AddT(i, children) =
-        let u = nodes.Count
-        nodes.Add(Entry(i, children))
-        u
-
-    member this.Insert(i, children, u) =
-        hash.Add((i, children), u)
-
     member this.MK(i, children: int[]) =
         let firstChild = children.[0]
         if Array.forall((=)firstChild) children
@@ -42,8 +34,9 @@ type NDDBuilder(domainSizes: int array) =
             match hash.TryGetValue((i, children)) with
             | true, v -> v
             | _ ->
-                let u = this.AddT((i, children))
-                this.Insert(i, children, u)
+                let u = nodes.Count
+                nodes.Add(Entry(i, children))
+                hash.Add((i, children), u)
                 u
 
     member this.BuildEnv pred =
@@ -57,6 +50,7 @@ type NDDBuilder(domainSizes: int array) =
                 this.MK(i, values)
         build'(Map.empty, 0)
 
+// todo introduce mem table to avoid exponential running time
     member this.Restrict(u, j, b) =
         let rec res u =
             let n = nodes.[u]
