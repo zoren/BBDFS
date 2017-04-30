@@ -126,6 +126,7 @@ type NDDBuilder(domainSizes: int array) =
             | _ -> failwith "expected 3 args"
         this.ApplyN(ite, [|u1; x; u2|])
 
+// bug: this only works for boolean vars
     member this.Exists(x, t) =
         let t0 = this.Restrict(t, 0, x)
         let t1 = this.Restrict(t, 1, x)
