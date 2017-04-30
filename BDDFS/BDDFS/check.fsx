@@ -137,3 +137,50 @@ let testT (inpExp: InpExp<int, int>) =
                         p env)
 
 Check.Quick testT
+
+let getTuple = 
+    function 
+    | [|x;y|] -> x,y
+    | _ -> failwith "expected two elements"
+
+let getSingleton = 
+    function 
+    | [|x|] -> x
+    | _ -> failwith "expected one element"
+
+// build ndd using apply
+let buildNDD (b: NDDBuilder) =
+    let rec mk e =
+        match e with
+        | VarEq(v, value) -> b.BuildEnv (fun env -> Map.find v env = value)
+        | Call(f, args) ->
+            let eargs = Array.map mk args
+            let func =
+                match f with
+                | And -> getTuple >> fun (i0, i1) -> i0 && i1
+                | Or -> getTuple >> fun (i0, i1) ->  i0 || i1
+                | Not -> getSingleton >> not
+            b.ApplyN((fun is -> if func <| Array.map ((=)1) is then 1 else 0), eargs)
+    mk
+
+let testBuildUsingApply (inpExp: InpExp<int, int>) =
+    let e = convert inpExp
+    let strDom = getDomain e
+    let getVarIndex v = strDom.Keys |> Seq.findIndex((=)v)
+    let getValueIndex v value = strDom.[v] |> Seq.findIndex((=)value)
+    let exp =
+        mapExp (fun (v, value) -> getVarIndex v, getValueIndex v value) e
+    let dom = getDomain exp
+    let maxVar = dom.Keys |> Seq.max
+    let vars = [|0 .. maxVar|]
+    let domSizes = Array.map (fun v -> defaultArg (Option.map seq <| tryGetOpt dom v) (seq [1]) |> Seq.max |> (+)1 |> max 2)  vars
+    let b = NDDBuilder(domSizes)
+    let bddTopIndex = buildNDD b exp
+    let pred = fun env -> evalExp env exp
+    let p = fun e -> b.Eval(e, bddTopIndex) = pred e 
+    let e = buildDoms domSizes
+    e |> List.forall (fun vals ->
+                        let env = Map.ofSeq <| Seq.indexed vals
+                        p env)
+
+Check.Quick testBuildUsingApply
